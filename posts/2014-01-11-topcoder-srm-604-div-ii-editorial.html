@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>TopCoder SRM 604 Div. II Editorial - Arknave</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="author" href="http://www.arknave.me" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+    </head>
+
+    <body>
+        <header>
+            <div id="logo">
+                <a href="../">Arknave</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../archive.html">Archive</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <section id="content">
+            <h2>TopCoder SRM 604 Div. II Editorial</h2>
+
+            <div class="info">
+    Posted on January 11, 2014
+</div>
+
+<article class="post-content">
+    <h3 id="fox-and-word"><a href="http://community.topcoder.com/stat?c=problem_statement&amp;pm=12953&amp;rd=15837">Fox And Word</a></h3>
+<p>TopCoder uses pretty small limits, so we can brute force this. It takes O(N<sup>2</sup>) to iterate through every pair of strings. We can check if one string is a rearrangement of the other in O(N<sup>2</sup>) again (O(N) to try every possible shift, O(N) to verify the shifted string matches the other one). This results in a O(N^2 * N^2) = <strong>O(N<sup>4</sup>)</strong> solution. I wrote a new method to check if two strings can be rearranged to simplify the code. Here’s my solution in C++ (be gentle, still learning):</p>
+<pre><code>bool works(string a, string b) {
+    if(a.size() != b.size()) return false;
+    int N = a.size();
+    for(int p = 0; p&lt;N; p++) {
+        bool works = true;
+        for(int j=0, i=p%N;j&lt;N;i = (i+1)%N, j++) {
+            if(a[i] != b[j]) {
+                works = false;
+                break;
+            }
+        }
+        if(works) return true;
+    }
+    return false;
+}
+
+class FoxAndWord {
+public:
+    int howManyPairs(vector &lt;string&gt; words) {
+        int N = words.size(), count = 0;
+        for(int i=0;i&lt;N;i++) {
+            for(int j=i+1;j&lt;N;j++) {
+                if(works(words[i], words[j])) count++;
+            }
+        }
+        return count;
+    }
+};
+</code></pre>
+<p>A faster way to check if the strings are equal is to use the <code>substring</code> function.</p>
+<h3 id="power-of-three-easy"><a href="http://community.topcoder.com/stat?c=problem_statement&amp;pm=12952&amp;rd=15837&amp;rm=320185&amp;cr=23138918">Power of Three Easy</a></h3>
+<p>This problem can be both brute forced and intelligently solved, although the technique for solving it intelligently is useful in more complicated problems.</p>
+<h4 id="brute-force">Brute Force</h4>
+<p>Since there’s only two directions to go, and they don’t oppose each other, we can just try every possible point starting from (0, 0). Even though the edge of the board is 1,000,000,000 units away, Fox is tripling the distance he moves at each step. Since 3^20 &gt; 1,000,000,000, he can take a maximum of 20 steps <strong>combined</strong>! This makes it easy to find every location he can land on, as there are less than 400 of them. We can do it with BFS or DFS. Here’s a succint brute force solution in Python:</p>
+<pre><code>def dfs(x, y, a, b, step):
+    if a &gt; 1000000000 or b &gt; 1000000000:
+        return False
+    if a == x and b == y:
+        return True
+    return dfs(x, y, a+step, b, 3*step) or dfs(x, y, a, b+step, 3*step)
+
+class PowerOfThreeEasy:
+    def ableToGet(self, x, y):
+        return &quot;Possible&quot; if dfs(x, y, 0, 0, 1) else &quot;Impossible&quot;</code></pre>
+<h4 id="more-intelligent-solution">More Intelligent Solution</h4>
+<p>Since we can only move in units of 3<sup>k</sup>, x and y have special properties in <a href="https://en.wikipedia.org/wiki/Trinary">trinary</a>. Since we can use each trinary digit once, the sum of x and y in trinary should be composed of only 1s. This means that, the digits of x and y in trinary can only be 0 or 1, and the sum of the corresponding digits must be one.</p>
+<p>That’s is a little tricky to read, let’s write out an example: Say <code>x = 3</code> and <code>y = 10</code>. In trinary, <code>x = 010</code> and <code>y = 101</code></p>
+<pre><code>  010 (x)
++ 101 (y)
+---------
+  111</code></pre>
+<p>Because the result is only 1s and the digits of x and y are never two and also not equal, 3 and 10 is a valid point. Here’s some code that uses this method:</p>
+<pre><code>int getTrit(int mask, int val) {
+  int trit = (val % mask) - (val % (mask / 3));
+  while(trit &gt;= 3) trit /= 3;
+  return trit;
+}
+ 
+class PowerOfThreeEasy {
+public:
+  string ableToGet(int x, int y) {
+    int sum = x + y;
+    for(;sum &gt; 0;sum /= 3) {
+      if(sum%3 != 1) return &quot;Impossible&quot;;
+    }
+    sum = x + y;
+    int tx, ty;
+    for(int mask = 3; mask &lt;= sum; mask *= 3) {
+      tx = getTrit(mask, x);
+      ty = getTrit(mask, y);
+      if(tx==2||ty==2||tx==ty) return &quot;Impossible&quot;;
+    }
+    return &quot;Possible&quot;;
+  }
+};</code></pre>
+<h3 id="fox-connection-ii"><a href="http://community.topcoder.com/stat?c=problem_solution&amp;rd=15837&amp;rm=320185&amp;cr=23138918&amp;pm=12951">Fox Connection II</a></h3>
+<p><em>Note: I didn’t solve this problem during the contest, but here’s my thought process:</em></p>
+<p>We should be able to solve this problem using dynamic programming. Let’s define the two-dimensional matrix dp, where the first element is the size of the connected component, and the second element is an element that somehow defines that component uniquely, let’s call it a root. We can calculate the number of connected components of size s with root i with two steps:</p>
+<ul>
+<li>The component is entirely made up of a child of i and i itself.</li>
+<li>The component is split across two children of i.</li>
+</ul>
+<p>Then we can calculate <code>dp[s][i]</code> as the sum of all <code>dp[s-1][j]</code>, where j are the children of i, to account the first bullet point. The second bullet point is a little harder. Let’s define a value k to be the size of the component of one of the children. Then we need to sum up all <code>dp[k][a]*dp[s-k-1][b]</code> where a and b are all pairwise children of i, for all values of k between 1 and s-1. Unfortunately, I had some bug (overflow error probably) and didn’t code a working solution in time.</p>
+<hr />
+<p>With two successful hacks, I finished 34th out of 1435 competitors and was re-promoted to TopCoder Division I! This time, I’m going to practice more and not fall back into Division II. One thing I need to work on is speed: it took me just over 20 minutes to code up a bug-free solution to the Powers of Three problem.</p>
+</article>
+
+        </section>
+        <footer>
+            Site generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
