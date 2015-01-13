@@ -4,6 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>Crump Solution - Arknave</title>
         <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
         <link rel="author" href="http://www.arknave.me" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
@@ -33,35 +34,34 @@
     <p><em>Crump is a problem I gave to my school’s Advanced Computer Programming Class. You can read the problem <a href="https://docs.google.com/document/d/1hA8-e_M70a_5hmsM3TTn1LVE1RkZ0KfkbfDct0G3UVc/edit?usp=sharing">here</a>.</em></p>
 <p>This problem was lifted almost directly from the USACO training pages, but I wrote a short backstory to make it harder to search for answers. The problem can be split into two parts, parsing the input and solving the problem efficiently.</p>
 <h3 id="parsing-the-input">Parsing the input</h3>
-<pre><code>#include &lt;iostream&gt;
-#include &lt;fstream&gt;
-#define MAX_N 33
-using namespace std;
-bool field[4*MAX_N][4*MAX_N] = {{0}};
-int N, M;
-char A;
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#include &lt;iostream&gt;</span>
+<span class="ot">#include &lt;fstream&gt;</span>
+<span class="ot">#define MAX_N 33</span>
+<span class="kw">using</span> <span class="kw">namespace</span> std;
+<span class="dt">bool</span> field[<span class="dv">4</span>*MAX_N][<span class="dv">4</span>*MAX_N] = {{<span class="dv">0</span>}};
+<span class="dt">int</span> N, M;
+<span class="dt">char</span> A;
 
-void loadBin(int i, int j, char c) {
-    int a = (int)c;
-    a -= '0';
-    if(a &gt; 0xF) a += ('0' - 'A' + 0xA);
-    for(int mask = 8, t=j; mask &gt; 0; mask /= 2, t++){
+<span class="dt">void</span> loadBin(<span class="dt">int</span> i, <span class="dt">int</span> j, <span class="dt">char</span> c) {
+    <span class="dt">int</span> a = (<span class="dt">int</span>)c;
+    a -= <span class="st">'0'</span>;
+    <span class="kw">if</span>(a &gt; <span class="bn">0xF</span>) a += (<span class="st">'0'</span> - <span class="st">'A'</span> + <span class="bn">0xA</span>);
+    <span class="kw">for</span>(<span class="dt">int</span> mask = <span class="dv">8</span>, t=j; mask &gt; <span class="dv">0</span>; mask /= <span class="dv">2</span>, t++){
         field[i][t] = (a &amp; mask);
     }
 }
 
-int main() {
-    ifstream fin (&quot;crump.in&quot;);
+<span class="dt">int</span> main() {
+    ifstream fin (<span class="st">&quot;crump.in&quot;</span>);
     fin &gt;&gt; N &gt;&gt; M;
-    for(int i=0;i&lt;4*N;i++) {
-        for(int j=0;j&lt;M;j++) {
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;<span class="dv">4</span>*N;i++) {
+        <span class="kw">for</span>(<span class="dt">int</span> j=<span class="dv">0</span>;j&lt;M;j++) {
             fin &gt;&gt; A;
-            loadBin(i, 4*j, A);
+            loadBin(i, <span class="dv">4</span>*j, A);
         }
     }
-	return 0;
-}
-</code></pre>
+	<span class="kw">return</span> <span class="dv">0</span>;
+}</code></pre>
 <p>Here’s the code I started with. Let’s go through the <code>loadBin</code> function, as that’s the interesting part. The first part is wrangling the character <code>c</code> into its corresponding hex value <code>a</code>. If 0 ≤ c ≤ 9, then we can just subtract <code>'0'</code>. Otherwise, we need to subtract <code>'A'</code>, and add <code>0xA</code> to make <code>'A'</code> line up with <code>0xA</code>.</p>
 <p>Now that we have only 4 bits of data, how can we load it into the matrix? Let’s use a <a href="https://en.wikipedia.org/wiki/Bitmask">bitmask</a>! Here, my mask starts at <code>1000</code>, then goes to <code>0100</code>, <code>0010</code>, and finally <code>0001</code>. As my mask halves each time, the index I place the result into is advanced, properly populating the <code>field</code> matrix.</p>
 <h3 id="solving-the-problem">Solving the Problem</h3>

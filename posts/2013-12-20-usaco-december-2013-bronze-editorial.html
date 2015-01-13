@@ -4,6 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>USACO Bronze December 2013 Editorial - Arknave</title>
         <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
         <link rel="author" href="http://www.arknave.me" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
@@ -34,111 +35,123 @@
 <p>December brought another rough 4-hour contest. The highlight of the bronze contest was “Wormhole”, a challenging combinatorics problem.</p>
 <h3 id="bronze-i-record-keeping"><a href="http://usaco.org/index.php?page=viewproblem2&amp;cpid=358">Bronze I: Record Keeping</a></h3>
 <p>An important part of parsing strings is <em>normalization</em>, where we restructure the input data into a logical, consistent format. This isn’t common in contest problems, but the concept is useful here. To check if two groups are the same, we have to normalize the groups and compare them somehow. To do this, I changed a space separated list of three cows into a comma delimited list of three <strong>sorted</strong> cows. This way, we can compare two sets of cows just as we could compare two strings. Here’s the sorting and normalization:</p>
-<p><code>prettyprint lang-cpp ifstream fin (&quot;records.in&quot;); ofstream fout (&quot;records.out&quot;); int N; fin &gt;&gt; N; string a, b, c;  vector&lt;string&gt; v; for(int i=0;i&lt;N;i++) { 	fin &gt;&gt; a &gt;&gt; b &gt;&gt; c; 	//why sort() when you can write your own? 	if(a &gt; b) swap(a, b); 	if(a &gt; c) swap(a, c); 	if(b &gt; c) swap(b, c);     v.push_back(a+&quot;,&quot;+b+&quot;,&quot;+c); }</code></p>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">ifstream fin (<span class="st">&quot;records.in&quot;</span>);
+ofstream fout (<span class="st">&quot;records.out&quot;</span>);
+<span class="dt">int</span> N;
+fin &gt;&gt; N;
+string a, b, c; 
+vector&lt;string&gt; v;
+<span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;N;i++) {
+	fin &gt;&gt; a &gt;&gt; b &gt;&gt; c;
+	<span class="co">//why sort() when you can write your own?</span>
+	<span class="kw">if</span>(a &gt; b) swap(a, b);
+	<span class="kw">if</span>(a &gt; c) swap(a, c);
+	<span class="kw">if</span>(b &gt; c) swap(b, c);
+    v.push_back(a+<span class="st">&quot;,&quot;</span>+b+<span class="st">&quot;,&quot;</span>+c);
+}</code></pre>
 <p>The delimiter is important, as without it, the three cows <code>aaa bb c</code> would be seen as the same as <code>aa b bc</code>, even though none of the cows are the same.</p>
 <p>There are a few ways to count the most common cow. The first is dumping our normalized strings into a <code>vector</code> or <code>list</code> and sorting the container. Then we can scan through the sorted list in linear time and find the most common element. Here’s that code:</p>
-<pre><code>//v is a vector with the normalized strings
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">//v is a vector with the normalized strings</span>
 sort(v.begin(), v.end());
-int count = 1, best = 1;
-for(int i=1;i&lt;N;i++){
+<span class="dt">int</span> count = <span class="dv">1</span>, best = <span class="dv">1</span>;
+<span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">1</span>;i&lt;N;i++){
 	count++;
-    if(v[i] != v[i-1]) {
-        count = 1;
+    <span class="kw">if</span>(v[i] != v[i<span class="dv">-1</span>]) {
+        count = <span class="dv">1</span>;
     }
     best = max(best, count);
 }
-fout &lt;&lt; best &lt;&lt; '\n';</code></pre>
+fout &lt;&lt; best &lt;&lt; <span class="st">'</span><span class="ch">\n</span><span class="st">'</span>;</code></pre>
 <p>Overall runtime: O(nlogn) (sort) + O(n) (find max) = <strong>O(nlogn)</strong></p>
 <p>Alternately, we could create a map from strings to ints. The keys are the normalized cow strings, and the values are the number of occurences of each string. Here’s a full solution using STL’s <code>map</code>:</p>
-<pre><code>#include &lt;iostream&gt;
-#include &lt;fstream&gt;
-#include &lt;map&gt;
-#include &lt;algorithm&gt;
-using namespace std;
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#include &lt;iostream&gt;</span>
+<span class="ot">#include &lt;fstream&gt;</span>
+<span class="ot">#include &lt;map&gt;</span>
+<span class="ot">#include &lt;algorithm&gt;</span>
+<span class="kw">using</span> <span class="kw">namespace</span> std;
 
-int main() {
-    ifstream fin (&quot;records.in&quot;);
-    ofstream fout (&quot;records.out&quot;);
-    int N;
+<span class="dt">int</span> main() {
+    ifstream fin (<span class="st">&quot;records.in&quot;</span>);
+    ofstream fout (<span class="st">&quot;records.out&quot;</span>);
+    <span class="dt">int</span> N;
     fin &gt;&gt; N;
     string a, b, c, s; 
-    map&lt;string, int&gt; m;
-    for(int i=0;i&lt;N;i++) {
+    map&lt;string, <span class="dt">int</span>&gt; m;
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;N;i++) {
         fin &gt;&gt; a &gt;&gt; b &gt;&gt; c;
-        //sorts yo
-        if(a &gt; b) swap(a, b);
-        if(a &gt; c) swap(a, c);
-        if(b &gt; c) swap(b, c);
-        //v.push_back(a+&quot;.&quot;+b+&quot;.&quot;+c);
-        s = a+&quot;,&quot;+b+&quot;,&quot;+c;
+        <span class="co">//sorts yo</span>
+        <span class="kw">if</span>(a &gt; b) swap(a, b);
+        <span class="kw">if</span>(a &gt; c) swap(a, c);
+        <span class="kw">if</span>(b &gt; c) swap(b, c);
+        <span class="co">//v.push_back(a+&quot;.&quot;+b+&quot;.&quot;+c);</span>
+        s = a+<span class="st">&quot;,&quot;</span>+b+<span class="st">&quot;,&quot;</span>+c;
         m[s]++;
     }
-    int best = 1;
-    for(map&lt;string, int&gt;::iterator it = m.begin(); it != m.end(); it++) {
+    <span class="dt">int</span> best = <span class="dv">1</span>;
+    <span class="kw">for</span>(map&lt;string, <span class="dt">int</span>&gt;::iterator it = m.begin(); it != m.end(); it++) {
         best = max(best, it-&gt;second);
     }
-    fout &lt;&lt; best &lt;&lt; '\n';
-    return 0;
+    fout &lt;&lt; best &lt;&lt; <span class="st">'</span><span class="ch">\n</span><span class="st">'</span>;
+    <span class="kw">return</span> <span class="dv">0</span>;
 }</code></pre>
 <h3 id="bronze-ii-baseball"><a href="http://usaco.org/index.php?page=viewproblem2&amp;cpid=359">Bronze II: Baseball</a></h3>
 <p>If you get lucky and use a fast language like C++, brute forcing this problem is possible. We can try every triple of cows O(N<sup>3</sup>) and make sure that the distance from the second cow to the third cow is at least the distance from first to second, but not twice as far from first to second. Here’s the full brute force code:</p>
-<pre><code>#include &lt;iostream&gt;
-#include &lt;fstream&gt;
-#include &lt;algorithm&gt;
-#define MAX_N 1001
-using namespace std;
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#include &lt;iostream&gt;</span>
+<span class="ot">#include &lt;fstream&gt;</span>
+<span class="ot">#include &lt;algorithm&gt;</span>
+<span class="ot">#define MAX_N 1001</span>
+<span class="kw">using</span> <span class="kw">namespace</span> std;
 
-int main() {
-    ifstream fin (&quot;baseball.in&quot;);
-    ofstream fout (&quot;baseball.out&quot;);
-    int cows[MAX_N], N;
+<span class="dt">int</span> main() {
+    ifstream fin (<span class="st">&quot;baseball.in&quot;</span>);
+    ofstream fout (<span class="st">&quot;baseball.out&quot;</span>);
+    <span class="dt">int</span> cows[MAX_N], N;
     fin &gt;&gt; N;
-    for(int i=0;i&lt;N;i++) {
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;N;i++) {
         fin &gt;&gt; cows[i];
     }
     sort(cows, cows+N);
-    int count = 0, d, f;
-    for(int i=0;i&lt;N-2;i++) {
-        for(int j=i+1;j&lt;N-1;j++) {
-            for(int k=j+1;k&lt;N;k++) {
+    <span class="dt">int</span> count = <span class="dv">0</span>, d, f;
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;N<span class="dv">-2</span>;i++) {
+        <span class="kw">for</span>(<span class="dt">int</span> j=i<span class="dv">+1</span>;j&lt;N<span class="dv">-1</span>;j++) {
+            <span class="kw">for</span>(<span class="dt">int</span> k=j<span class="dv">+1</span>;k&lt;N;k++) {
                 d = cows[j] - cows[i];
                 f = cows[k] - cows[j];
-                if(f &gt;= d &amp;&amp; f &lt;= 2*d) count++;
+                <span class="kw">if</span>(f &gt;= d &amp;&amp; f &lt;= <span class="dv">2</span>*d) count++;
             }
         }
     }
     fout &lt;&lt; count &lt;&lt; endl;
-    return 0;
-}
-</code></pre>
+    <span class="kw">return</span> <span class="dv">0</span>;
+}</code></pre>
 <p>This shouldn’t work. To avoid teetering on the edge of the time limit like this, we should find a more efficient algorithm. Using <a href="https://en.wikipedia.org/wiki/Binary_search">binary search</a>, we can solve this problem in <strong>O(N<sup>2</sup>logN)</strong> time. To do this, let’s iterate over every pair of cows. This takes O(N<sup>2</sup>) time. Let’s call the first cow a, the second cow b, and the distance between a and b m. We can binary search our cow array for b+m and b+2m. Even if a cow at that position doesn’t exist, binary search can tell us where the cow “would be” if it were there. Most languages have some form of built-in binary search. Here’s a full solution using the C++ STL <code>lower_bound</code> and <code>upper_bound</code>.</p>
-<pre><code>#include &lt;iostream&gt;
-#include &lt;fstream&gt;
-#include &lt;algorithm&gt;
-#define MAX_N 1001
-using namespace std;
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="ot">#include &lt;iostream&gt;</span>
+<span class="ot">#include &lt;fstream&gt;</span>
+<span class="ot">#include &lt;algorithm&gt;</span>
+<span class="ot">#define MAX_N 1001</span>
+<span class="kw">using</span> <span class="kw">namespace</span> std;
 
-int main() {
-    ifstream fin (&quot;baseball.in&quot;);
-    ofstream fout (&quot;baseball.out&quot;);
-    int cows[MAX_N], N;
+<span class="dt">int</span> main() {
+    ifstream fin (<span class="st">&quot;baseball.in&quot;</span>);
+    ofstream fout (<span class="st">&quot;baseball.out&quot;</span>);
+    <span class="dt">int</span> cows[MAX_N], N;
     fin &gt;&gt; N;
-    for(int i=0;i&lt;N;i++) {
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;N;i++) {
         fin &gt;&gt; cows[i];
     }
     sort(cows, cows+N);
-    int count = 0;
-    for(int i=0;i&lt;N-2;i++) {
-        for(int j=i+1;j&lt;N-1;j++) {
-            int M = cows[j]-cows[i];
-            //find all cows in [cows[j]+M,cows[j]+2M]
-            int lo = lower_bound(cows, cows+N, cows[j]+M)  - cows;
-            int hi = upper_bound(cows, cows+N, cows[j]+2*M) - cows;
+    <span class="dt">int</span> count = <span class="dv">0</span>;
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;N<span class="dv">-2</span>;i++) {
+        <span class="kw">for</span>(<span class="dt">int</span> j=i<span class="dv">+1</span>;j&lt;N<span class="dv">-1</span>;j++) {
+            <span class="dt">int</span> M = cows[j]-cows[i];
+            <span class="co">//find all cows in [cows[j]+M,cows[j]+2M]</span>
+            <span class="dt">int</span> lo = lower_bound(cows, cows+N, cows[j]+M)  - cows;
+            <span class="dt">int</span> hi = upper_bound(cows, cows+N, cows[j]<span class="dv">+2</span>*M) - cows;
             count += (hi - lo);
         }
     }
     fout &lt;&lt; count &lt;&lt; endl;
-    return 0;
+    <span class="kw">return</span> <span class="dv">0</span>;
 }</code></pre>
 <h3 id="bronze-iii-wormholes"><a href="http://usaco.org/index.php?page=viewproblem2&amp;cpid=360">Bronze III: Wormholes</a></h3>
 <p>A little bit of math reveals that there are only 10,395 ways to choose six pairs of wormholes from 12 wormholes (see footnote). If we have a O(n<sup>2</sup>) algorithm that checks for a loop given the pairings, that’s probably just fast enough.</p>

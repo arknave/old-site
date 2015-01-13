@@ -4,6 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>February USACO Editorial - Arknave</title>
         <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
         <link rel="author" href="http://www.arknave.me" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
@@ -37,108 +38,109 @@
 <h4 id="binary-search">Binary Search</h4>
 <p>Create a vector which pairs strings and ints. The string is the word, and the int is the original index. Sort the vector based on the string. Now we can do a binary search for our prefix to find the first word in the dictionary which has our prefix. We can then step over k elements and see if the element we’re on is still has the same prefix.</p>
 <p>Code speaks louder than words.</p>
-<pre><code>//skipping imports
-int W, N, k;
-vector&lt;pair&lt;string, int&gt; &gt; s;
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">//skipping imports</span>
+<span class="dt">int</span> W, N, k;
+vector&lt;pair&lt;string, <span class="dt">int</span>&gt; &gt; s;
 string t;
 
-int binary_search() {
-    int low = 0, high = W, mid;
-    while(low &lt; high) {
-        mid = (low + high) / 2;
-        if(s[mid].first &lt; t) low = mid + 1;
-        else high = mid;
+<span class="dt">int</span> binary_search() {
+    <span class="dt">int</span> low = <span class="dv">0</span>, high = W, mid;
+    <span class="kw">while</span>(low &lt; high) {
+        mid = (low + high) / <span class="dv">2</span>;
+        <span class="kw">if</span>(s[mid].first &lt; t) low = mid + <span class="dv">1</span>;
+        <span class="kw">else</span> high = mid;
     }
-    return low;
+    <span class="kw">return</span> low;
 }
 
-bool is_prefix(int p) {
-    //returns true if t is a prefix of the string at position p
+<span class="dt">bool</span> is_prefix(<span class="dt">int</span> p) {
+    <span class="co">//returns true if t is a prefix of the string at position p</span>
     string prefix = s[p].first;
-    return prefix.substr(0, t.size()) == t;
+    <span class="kw">return</span> prefix.substr(<span class="dv">0</span>, t.size()) == t;
 }
 
-int main() {
-    ifstream fin (&quot;auto.in&quot;);
-    ofstream fout (&quot;auto.out&quot;);
+<span class="dt">int</span> main() {
+    ifstream fin (<span class="st">&quot;auto.in&quot;</span>);
+    ofstream fout (<span class="st">&quot;auto.out&quot;</span>);
     fin &gt;&gt; W &gt;&gt; N;
-    for(int i=0;i&lt;W;i++) {
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;W;i++) {
         fin &gt;&gt; t;
-        s.push_back(make_pair(t, i+1)); 
+        s.push_back(make_pair(t, i<span class="dv">+1</span>)); 
     }
     sort(s.begin(), s.end());
-    for(int i=0;i&lt;N;i++) {
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;N;i++) {
         fin &gt;&gt; k &gt;&gt; t; 
         k--;
-        int pos = binary_search();
+        <span class="dt">int</span> pos = binary_search();
         pos += k;
-        if(pos &lt; W &amp;&amp; is_prefix(pos)) {
+        <span class="kw">if</span>(pos &lt; W &amp;&amp; is_prefix(pos)) {
             fout &lt;&lt; s[pos].second &lt;&lt; endl;
-        } else {
-            fout &lt;&lt; -1 &lt;&lt; endl;
+        } <span class="kw">else</span> {
+            fout &lt;&lt; <span class="dv">-1</span> &lt;&lt; endl;
         }
     }
-    return 0;
-}
-</code></pre>
+    <span class="kw">return</span> <span class="dv">0</span>;
+}</code></pre>
 <p>Let’s look at the runtime of this. The first step after reading in the data is sorting. This takes O(WlogW) time, where W is the number of lines. In the worst case, we have 1 character per line, which sets W at 1,000,000. Uh-oh, this is too long!</p>
-<p>This can be salvaged by using a O(N) sorting algorithm like radix sort. Which brings us to our next method: ####The “Trie”d and True Method A trie (pronounced “try” to distinguish it from a tree) is a recursive data structure which we can use to solve this problem. We can store the number of elements below a node within each node to easily detect which to descend to.</p>
+<p>This can be salvaged by using a O(N) sorting algorithm like radix sort. Which brings us to our next method:</p>
+<h4 id="the-tried-and-true-method">The “Trie”d and True Method</h4>
+<p>A trie (pronounced “try” to distinguish it from a tree) is a recursive data structure which we can use to solve this problem. We can store the number of elements below a node within each node to easily detect which to descend to.</p>
 <h3 id="bronze-iiisilver-iii-secret-code"><a href="http://usaco.org/index.php?page=viewproblem&amp;cpid=390">Bronze III/Silver III: Secret Code</a></h3>
 <p>I’ll merge these together since the silver solution will also handle the bronze solution.</p>
 <h4 id="dynamic-programming">Dynamic Programming</h4>
 <p>Our state is the string we’re looking at. We then check the four possibilities. Since there are O(N) ways to split a substring and O(N^2) substrings, our code runs in O(N^3) time. I think the code is clearer than any english explanation.</p>
-<pre><code>//no imports
-#define MAX_N 105
-#define MOD 2014
-using namespace std;
-int N, dp[MAX_N][MAX_N] = {{0}};
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">//no imports</span>
+<span class="ot">#define MAX_N 105</span>
+<span class="ot">#define MOD 2014</span>
+<span class="kw">using</span> <span class="kw">namespace</span> std;
+<span class="dt">int</span> N, dp[MAX_N][MAX_N] = {{<span class="dv">0</span>}};
 string s, first, second;
 
-bool is_prefix(bool reverse) {
-    if(reverse) {
-        return second == first.substr(0, second.size());
-    } else {
-        return first == second.substr(0, first.size());
+<span class="dt">bool</span> is_prefix(<span class="dt">bool</span> reverse) {
+    <span class="kw">if</span>(reverse) {
+        <span class="kw">return</span> second == first.substr(<span class="dv">0</span>, second.size());
+    } <span class="kw">else</span> {
+        <span class="kw">return</span> first == second.substr(<span class="dv">0</span>, first.size());
     }
 }
 
-bool is_suffix(bool reverse) {
-    if(reverse) {
-        return second == first.substr(first.size()-second.size(), second.size());
-    } else {
-        return first == second.substr(second.size()-first.size(), first.size());
+<span class="dt">bool</span> is_suffix(<span class="dt">bool</span> reverse) {
+    <span class="kw">if</span>(reverse) {
+        <span class="kw">return</span> second == first.substr(first.size()-second.size(), second.size());
+    } <span class="kw">else</span> {
+        <span class="kw">return</span> first == second.substr(second.size()-first.size(), first.size());
     }
 }
 
-int main() {
-    ifstream fin (&quot;scode.in&quot;);
-    ofstream fout (&quot;scode.out&quot;);
+<span class="dt">int</span> main() {
+    ifstream fin (<span class="st">&quot;scode.in&quot;</span>);
+    ofstream fout (<span class="st">&quot;scode.out&quot;</span>);
     fin &gt;&gt; s;
     N = s.size();
-    for(int size=3;size&lt;=N;size++) {
-        for(int start=0;start+size&lt;=N;start++) {
-            for(int flen=1;flen&lt;size;flen++) {
+    <span class="kw">for</span>(<span class="dt">int</span> size=<span class="dv">3</span>;size&lt;=N;size++) {
+        <span class="kw">for</span>(<span class="dt">int</span> start=<span class="dv">0</span>;start+size&lt;=N;start++) {
+            <span class="kw">for</span>(<span class="dt">int</span> flen=<span class="dv">1</span>;flen&lt;size;flen++) {
                 first = s.substr(start, flen);
                 second = s.substr(start+flen, size-flen);
-                if( first.size() &lt; second.size() &amp;&amp; second.size() &gt;= 2 &amp;&amp; is_prefix(false) ) {
+                <span class="kw">if</span>( first.size() &lt; second.size() &amp;&amp; second.size() &gt;= <span class="dv">2</span> &amp;&amp; is_prefix(<span class="kw">false</span>) ) {
                     dp[size][start]++;
                     dp[size][start] += dp[size-flen][start+flen];
                     dp[size][start] %= MOD;
                 }
                 
-                if( first.size() &lt; second.size() &amp;&amp; second.size() &gt;= 2 &amp;&amp; is_suffix(false) ) {
+                <span class="kw">if</span>( first.size() &lt; second.size() &amp;&amp; second.size() &gt;= <span class="dv">2</span> &amp;&amp; is_suffix(<span class="kw">false</span>) ) {
                     dp[size][start]++;
                     dp[size][start] += dp[size-flen][start+flen];
                     dp[size][start] %= MOD;
                 }
                 
-                if( second.size() &lt; first.size() &amp;&amp; first.size() &gt;= 2 &amp;&amp; is_prefix(true) ) {
+                <span class="kw">if</span>( second.size() &lt; first.size() &amp;&amp; first.size() &gt;= <span class="dv">2</span> &amp;&amp; is_prefix(<span class="kw">true</span>) ) {
                     dp[size][start]++;
                     dp[size][start] += dp[flen][start];
                     dp[size][start] %= MOD;
                 }
                 
-                if( second.size() &lt; first.size() &amp;&amp; first.size() &gt;= 2 &amp;&amp; is_suffix(true) ) {
+                <span class="kw">if</span>( second.size() &lt; first.size() &amp;&amp; first.size() &gt;= <span class="dv">2</span> &amp;&amp; is_suffix(<span class="kw">true</span>) ) {
                     dp[size][start]++;
                     dp[size][start] += dp[flen][start];
                     dp[size][start] %= MOD;
@@ -147,99 +149,98 @@ int main() {
             }
         }
     }
-    fout &lt;&lt; dp[N][0] &lt;&lt; endl;
-    return 0;
-}
-</code></pre>
+    fout &lt;&lt; dp[N][<span class="dv">0</span>] &lt;&lt; endl;
+    <span class="kw">return</span> <span class="dv">0</span>;
+}</code></pre>
 <p>Prior to this contest, I wasn’t aware of the differences between C/C++ <code>substr</code> method and Java/Javascript’s <code>substring</code> method. The optional second paramters in these functions behave differently - a source of many headaches and painful debugging during the contest.</p>
 <h4 id="regular-expressions">Regular Expressions</h4>
 <p>This only works for the bronze edition, but some carefully crafted regular expressions can simplify a lot of the code. <code>(\w)(.)+\1</code> will match a string followed by its prefix, and similar regexes can be constructed for the other cases.</p>
 <h3 id="silver-ii-roadblock"><a href="http://usaco.org/index.php?page=viewproblem&amp;cpid=389">Silver II: Roadblock</a></h3>
 <p>Fairly standard shortest path problem. The first step is to find the shortest path from Farmer John to the barn. We can solve this either with the Floyd-Warshall algorithm, which runs in O(N<sup>3</sup>) time, or Dijkstra’s algorithm, which runs in O(N<sup>2</sup>log(N)) time. 250 is a small number, but I used Dijkstra’s algorithm for the speedup because of what comes next.</p>
 <p>Once we do that, we try doubling the cost of each edge on the walk from Farmer John to the barn. We don’t need to double any other edges because that doesn’t change the length of the shortest path. This lowers the number of edge we have to try and double from 25,000 to 250. After we double each edge, we rerun Dijkstra’s algorithm and find the new shortest path. Here’s the code:</p>
-<pre><code>//skipping imports
-#define INF 250000050
-#define MAX_N 255
+<pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">//skipping imports</span>
+<span class="ot">#define INF 250000050</span>
+<span class="ot">#define MAX_N 255</span>
 
-int N, M, previous[MAX_N];
-vector&lt;pair&lt;int, int&gt; &gt; g[MAX_N];
+<span class="dt">int</span> N, M, previous[MAX_N];
+vector&lt;pair&lt;<span class="dt">int</span>, <span class="dt">int</span>&gt; &gt; g[MAX_N];
 
-int dijkstra(bool firstrun) {
-    //return distance from 0 to N-1
-    bool visited[MAX_N];
-    int dist[MAX_N];
-    fill(visited, visited+N, false);
+<span class="dt">int</span> dijkstra(<span class="dt">bool</span> firstrun) {
+    <span class="co">//return distance from 0 to N-1</span>
+    <span class="dt">bool</span> visited[MAX_N];
+    <span class="dt">int</span> dist[MAX_N];
+    fill(visited, visited+N, <span class="kw">false</span>);
     fill(dist, dist+N, INF);
-    if(firstrun) {
-        fill(previous, previous+N, -1);
+    <span class="kw">if</span>(firstrun) {
+        fill(previous, previous+N, <span class="dv">-1</span>);
     }
-    previous[0] = 0;
-    dist[0] = 0;
-    priority_queue&lt;pair&lt;int, int&gt; &gt; pq;
-    pq.push(make_pair(0, 0));
+    previous[<span class="dv">0</span>] = <span class="dv">0</span>;
+    dist[<span class="dv">0</span>] = <span class="dv">0</span>;
+    priority_queue&lt;pair&lt;<span class="dt">int</span>, <span class="dt">int</span>&gt; &gt; pq;
+    pq.push(make_pair(<span class="dv">0</span>, <span class="dv">0</span>));
 
-    while(!pq.empty()) {
-        int place = pq.top().second;
+    <span class="kw">while</span>(!pq.empty()) {
+        <span class="dt">int</span> place = pq.top().second;
         pq.pop();
 
-        if(visited[place]) continue;
-        visited[place] = true;
+        <span class="kw">if</span>(visited[place]) <span class="kw">continue</span>;
+        visited[place] = <span class="kw">true</span>;
         
-        for(int i=0;i&lt;g[place].size();i++) {
-            int vert = g[place][i].first, d = g[place][i].second;
-            if(dist[place] + d &lt; dist[vert]) {
+        <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;g[place].size();i++) {
+            <span class="dt">int</span> vert = g[place][i].first, d = g[place][i].second;
+            <span class="kw">if</span>(dist[place] + d &lt; dist[vert]) {
                 dist[vert] = dist[place] + d;
-                if(firstrun) previous[vert] = place;
+                <span class="kw">if</span>(firstrun) previous[vert] = place;
                 pq.push(make_pair(-(dist[place]+d), vert));
             }
         }
     }
-    return dist[N-1];
+    <span class="kw">return</span> dist[N<span class="dv">-1</span>];
 }
 
-int main() {
-    ifstream fin (&quot;rblock.in&quot;);
-    ofstream fout (&quot;rblock.out&quot;);
+<span class="dt">int</span> main() {
+    ifstream fin (<span class="st">&quot;rblock.in&quot;</span>);
+    ofstream fout (<span class="st">&quot;rblock.out&quot;</span>);
     fin &gt;&gt; N &gt;&gt; M;
-    int a, b, l;
-    for(int i=0;i&lt;M;i++) {
+    <span class="dt">int</span> a, b, l;
+    <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;M;i++) {
         fin &gt;&gt; a &gt;&gt; b &gt;&gt; l;
         a--; b--;
         g[a].push_back(make_pair(b, l));
         g[b].push_back(make_pair(a, l));
     }
-    int base = dijkstra(true);
-    //try doubling every edge on the shortest path
-    int e1 = N-1, e2 = previous[N-1];
-    int best = 0;
-    while(e1 != e2) {
-        //double length
-        int ind1 = -1, ind2 = -1, l;
-        for(int i=0;i&lt;g[e1].size();i++) {
-            if(g[e1][i].first == e2) {
+    <span class="dt">int</span> base = dijkstra(<span class="kw">true</span>);
+    <span class="co">//try doubling every edge on the shortest path</span>
+    <span class="dt">int</span> e1 = N<span class="dv">-1</span>, e2 = previous[N<span class="dv">-1</span>];
+    <span class="dt">int</span> best = <span class="dv">0</span>;
+    <span class="kw">while</span>(e1 != e2) {
+        <span class="co">//double length</span>
+        <span class="dt">int</span> ind1 = <span class="dv">-1</span>, ind2 = <span class="dv">-1</span>, l;
+        <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;g[e1].size();i++) {
+            <span class="kw">if</span>(g[e1][i].first == e2) {
                 ind1 = i;
-                break;
+                <span class="kw">break</span>;
             }
         }
-        for(int i=0;i&lt;g[e2].size();i++) {
-            if(g[e2][i].first == e1) {
+        <span class="kw">for</span>(<span class="dt">int</span> i=<span class="dv">0</span>;i&lt;g[e2].size();i++) {
+            <span class="kw">if</span>(g[e2][i].first == e1) {
                 ind2 = i;
                 l = g[e2][i].second;
-                break;
+                <span class="kw">break</span>;
             }
         }
-        g[e1][ind1].second = g[e2][ind2].second = 2*l;
-        cout &lt;&lt; &quot;doubling edge from &quot; &lt;&lt; e1 &lt;&lt; &quot; to &quot; &lt;&lt; e2 &lt;&lt; endl;
-        //try new graph
-        best = max(best, dijkstra(false)-base);
-        //halve length
-        g[e1][ind1].second = g[e2][ind2].second = l/2;
-        //try next edge
+        g[e1][ind1].second = g[e2][ind2].second = <span class="dv">2</span>*l;
+        cout &lt;&lt; <span class="st">&quot;doubling edge from &quot;</span> &lt;&lt; e1 &lt;&lt; <span class="st">&quot; to &quot;</span> &lt;&lt; e2 &lt;&lt; endl;
+        <span class="co">//try new graph</span>
+        best = max(best, dijkstra(<span class="kw">false</span>)-base);
+        <span class="co">//halve length</span>
+        g[e1][ind1].second = g[e2][ind2].second = l/<span class="dv">2</span>;
+        <span class="co">//try next edge</span>
         e1 = e2;
         e2 = previous[e1];
     }
     fout &lt;&lt; best &lt;&lt; endl;
-    return 0;
+    <span class="kw">return</span> <span class="dv">0</span>;
 }</code></pre>
 <p>I missed a few testcases on this one, not sure what happened yet.</p>
 <hr />

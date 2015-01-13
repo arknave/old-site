@@ -4,6 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>Finding Bulbasaur Part I: Welcome to Pallet Town - Arknave</title>
         <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
         <link rel="author" href="http://www.arknave.me" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
@@ -61,12 +62,12 @@
 <p>I recognized the text “POKEMON RED” in the header, but couldn’t make heads or tails of the rest of it. I definitely didn’t find Bulbasaur. It was time to bust out some code. I wrote all of the code in Haskell, but the ideas are language-agnostic.</p>
 <h3 id="first-pass">First Pass</h3>
 <p>To start, I just opened the file and searched for the string “BULBASAUR” in ASCII in the ROM.</p>
-<pre><code>import qualified Data.ByteString.Char8 as BS 
-import Data.Char
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import qualified</span> <span class="dt">Data.ByteString.Char8</span> <span class="kw">as</span> <span class="dt">BS</span> 
+<span class="kw">import </span><span class="dt">Data.Char</span>
 
-main = do
-    game &lt;- BS.readFile &quot;Pokemon Red.gb&quot;
-    print $ BS.take 50 . snd $ BS.breakSubstring (BS.pack &quot;BULBASAUR&quot;) game</code></pre>
+main <span class="fu">=</span> <span class="kw">do</span>
+    game <span class="ot">&lt;-</span> BS.readFile <span class="st">&quot;Pokemon Red.gb&quot;</span>
+    print <span class="fu">$</span> BS.take <span class="dv">50</span> <span class="fu">.</span> snd <span class="fu">$</span> BS.breakSubstring (BS.pack <span class="st">&quot;BULBASAUR&quot;</span>) game</code></pre>
 <p>Haskell’s syntax is a little strange at first, but powerful once you get used to it. The first lines are standard import statements, with syntax similar to Python. The main function is called when the program is run. The do block is shorthand for repeatedly calling the bind (<code>&gt;&gt;=</code>) function, something we won’t go into in this blog post. Just read it as this:</p>
 <ul>
 <li>Take the contents of the file “Pokemon Red.gb” and read them into <code>game</code>.</li>
@@ -76,18 +77,18 @@ main = do
 <p>The 50 characters is arbitrary. <code>breakSubstring</code> returns a tuple with two elements. The first element is a ByteString with all the bytes that precede our query, and the second contains our query and everything after. If our query isn’t found, the first element contains all input and the second element is empty. Unfortunately, the first run returned an empty string: <code>&quot;&quot;</code>. This means that the Pokemon ROM doesn’t use standard ASCII encoding.</p>
 <h3 id="a-bulbasaur-by-any-other-name">A Bulbasaur by Any Other Name…</h3>
 <p>I’m assuming that whatever encoding that GameFreak uses keeps the letters in alphabetical order. Let’s try every possible encoding.</p>
-<pre><code>import qualified Data.ByteString.Char8 as BS 
-import Data.Char
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import qualified</span> <span class="dt">Data.ByteString.Char8</span> <span class="kw">as</span> <span class="dt">BS</span> 
+<span class="kw">import </span><span class="dt">Data.Char</span>
 
-oneString :: String -&gt; Int -&gt; String
-oneString s n = map (\x -&gt; chr $ (ord x) + n) s
+<span class="ot">oneString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">String</span>
+oneString s n <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> chr <span class="fu">$</span> (ord x) <span class="fu">+</span> n) s
 
-allStrings :: String -&gt; [BS.ByteString]
-allStrings s = map (BS.pack . oneString s) [-65..165]
+<span class="ot">allStrings ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> [<span class="dt">BS.ByteString</span>]
+allStrings s <span class="fu">=</span> map (BS.pack <span class="fu">.</span> oneString s) [<span class="fu">-</span><span class="dv">65</span><span class="fu">..</span><span class="dv">165</span>]
 
-main = do
-    game &lt;- BS.readFile &quot;Pokemon Red.gb&quot;
-    print $ map (\x -&gt; BS.take 50 .  snd $ BS.breakSubstring x game) (allStrings &quot;BULBASAUR&quot;)</code></pre>
+main <span class="fu">=</span> <span class="kw">do</span>
+    game <span class="ot">&lt;-</span> BS.readFile <span class="st">&quot;Pokemon Red.gb&quot;</span>
+    print <span class="fu">$</span> map (\x <span class="ot">-&gt;</span> BS.take <span class="dv">50</span> <span class="fu">.</span>  snd <span class="fu">$</span> BS.breakSubstring x game) (allStrings <span class="st">&quot;BULBASAUR&quot;</span>)</code></pre>
 <p>The (<code>\x -&gt; f x</code>) is a lambda function. <code>oneString</code> takes a string and shifts all characters in the string by a parameter. <code>allStrings</code> calls <code>oneString</code> with every number from -65 to 165. These numbers were chosen to map A to 0 at the lowest point and Z to 255 at the highest. Running this code gives…</p>
 <pre><code>[&quot;&quot;,&quot;&quot;,&quot;&quot;, ... 
 
@@ -95,56 +96,59 @@ main = do
     
 &quot;&quot;, ..., &quot;&quot;]</code></pre>
 <p>Looks like we found Bulbasaur! Let’s figure out what that offset is. With Haskell’s <code>zip</code> function, we can tie an index to each element of the list, then pare the list down to the non-empty ByteStrings to find our lucky index.</p>
-<pre><code>import qualified Data.ByteString.Char8 as BS 
-import Data.Char
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import qualified</span> <span class="dt">Data.ByteString.Char8</span> <span class="kw">as</span> <span class="dt">BS</span> 
+<span class="kw">import </span><span class="dt">Data.Char</span>
 
-oneString :: String -&gt; Int -&gt; String
-oneString s n = map (\x -&gt; chr $ (ord x) + n) s
+<span class="ot">oneString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">String</span>
+oneString s n <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> chr <span class="fu">$</span> (ord x) <span class="fu">+</span> n) s
 
-allStrings :: String -&gt; [BS.ByteString]
-allStrings s = map (BS.pack . oneString s) [-65..165]
+<span class="ot">allStrings ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> [<span class="dt">BS.ByteString</span>]
+allStrings s <span class="fu">=</span> map (BS.pack <span class="fu">.</span> oneString s) [<span class="fu">-</span><span class="dv">65</span><span class="fu">..</span><span class="dv">165</span>]
 
-main = do
-    game &lt;- BS.readFile &quot;Pokemon Red.gb&quot;
-    print $ filter (\(_, b) -&gt; b /= BS.empty) . zip [0..] $ map (\x -&gt; BS.take 50 .  snd $ BS.breakSubstring x game) (allStrings &quot;BULBASAUR&quot;)</code></pre>
+main <span class="fu">=</span> <span class="kw">do</span>
+    game <span class="ot">&lt;-</span> BS.readFile <span class="st">&quot;Pokemon Red.gb&quot;</span>
+    print <span class="fu">$</span> filter (\(_, b) <span class="ot">-&gt;</span> b <span class="fu">/=</span> BS.empty) <span class="fu">.</span> zip [<span class="dv">0</span><span class="fu">..</span>] <span class="fu">$</span> 
+    map (\x <span class="ot">-&gt;</span> BS.take <span class="dv">50</span> <span class="fu">.</span>  snd <span class="fu">$</span> BS.breakSubstring x game) (allStrings <span class="st">&quot;BULBASAUR&quot;</span>)</code></pre>
 <p>This returns</p>
 <pre><code>[(128,&quot;\129\148 ... PPP&quot;)]</code></pre>
 <p>So it looks like <code>A</code> is <code>128</code>, or <code>0x80</code>. Let’s translate the bytes into plain english using our new encoding system.</p>
-<pre><code>import qualified Data.ByteString.Char8 as BS 
-import Data.Char
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import qualified</span> <span class="dt">Data.ByteString.Char8</span> <span class="kw">as</span> <span class="dt">BS</span> 
+<span class="kw">import </span><span class="dt">Data.Char</span>
 
-oneString :: String -&gt; Int -&gt; String
-oneString s n = map (\x -&gt; chr $ (ord x) + n) s
+<span class="ot">oneString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">String</span>
+oneString s n <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> chr <span class="fu">$</span> (ord x) <span class="fu">+</span> n) s
 
-allStrings :: String -&gt; [BS.ByteString]
-allStrings s = map (BS.pack . oneString s) [-65..165]
+<span class="ot">allStrings ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> [<span class="dt">BS.ByteString</span>]
+allStrings s <span class="fu">=</span> map (BS.pack <span class="fu">.</span> oneString s) [<span class="fu">-</span><span class="dv">65</span><span class="fu">..</span><span class="dv">165</span>]
 
-showByteString :: Char -&gt; Char
-showByteString s = chr $ (ord s) - 128 + 65
+<span class="ot">showByteString ::</span> <span class="dt">Char</span> <span class="ot">-&gt;</span> <span class="dt">Char</span>
+showByteString s <span class="fu">=</span> chr <span class="fu">$</span> (ord s) <span class="fu">-</span> <span class="dv">128</span> <span class="fu">+</span> <span class="dv">65</span>
 
-main = do
-    game &lt;- BS.readFile &quot;Pokemon Red.gb&quot;
-    print $ BS.map showByteString . BS.take 50 . snd $ BS.breakSubstring (BS.pack $ oneString &quot;BULBASAUR&quot; (128-65)) game</code></pre>
+main <span class="fu">=</span> <span class="kw">do</span>
+    game <span class="ot">&lt;-</span> BS.readFile <span class="st">&quot;Pokemon Red.gb&quot;</span>
+    print <span class="fu">$</span> BS.map showByteString <span class="fu">.</span> BS.take <span class="dv">50</span> <span class="fu">.</span> snd <span class="fu">$</span> 
+    BS.breakSubstring (BS.pack <span class="fu">$</span> oneString <span class="st">&quot;BULBASAUR&quot;</span> (<span class="dv">128</span><span class="fu">-</span><span class="dv">65</span>)) game</code></pre>
 <p>Which outputs:</p>
-<pre><code>&quot;BULBASAUR\DC1VENUSAUR\DC1\DC1TENTACRUELMISSINGNO\169GOLDEEN\DC1\DC1\DC1&quot;</code></pre>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="st">&quot;BULBASAUR\DC1VENUSAUR\DC1\DC1TENTACRUELMISSINGNO\169GOLDEEN\DC1\DC1\DC1&quot;</span></code></pre>
 <p>We did it! We found Bulbasaur! To get the memory offset, let’s modify the main function to output the number of bytes before the string “BULBASAUR”.</p>
-<pre><code>import qualified Data.ByteString.Char8 as BS 
-import Data.Char
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import qualified</span> <span class="dt">Data.ByteString.Char8</span> <span class="kw">as</span> <span class="dt">BS</span> 
+<span class="kw">import </span><span class="dt">Data.Char</span>
 
-oneString :: String -&gt; Int -&gt; String
-oneString s n = map (\x -&gt; chr $ (ord x) + n) s
+<span class="ot">oneString ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">String</span>
+oneString s n <span class="fu">=</span> map (\x <span class="ot">-&gt;</span> chr <span class="fu">$</span> (ord x) <span class="fu">+</span> n) s
 
-allStrings :: String -&gt; [BS.ByteString]
-allStrings s = map (BS.pack . oneString s) [-65..165]
+<span class="ot">allStrings ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> [<span class="dt">BS.ByteString</span>]
+allStrings s <span class="fu">=</span> map (BS.pack <span class="fu">.</span> oneString s) [<span class="fu">-</span><span class="dv">65</span><span class="fu">..</span><span class="dv">165</span>]
 
-showByteString :: Char -&gt; Char
-showByteString s = chr $ (ord s) - 63
+<span class="ot">showByteString ::</span> <span class="dt">Char</span> <span class="ot">-&gt;</span> <span class="dt">Char</span>
+showByteString s <span class="fu">=</span> chr <span class="fu">$</span> (ord s) <span class="fu">-</span> <span class="dv">63</span>
 
-main = do
-    game &lt;- BS.readFile &quot;Pokemon Red.gb&quot;
-    print $ BS.length . fst $ BS.breakSubstring (BS.pack $ oneString &quot;BULBASAUR&quot; (128-65)) game</code></pre>
+main <span class="fu">=</span> <span class="kw">do</span>
+    game <span class="ot">&lt;-</span> BS.readFile <span class="st">&quot;Pokemon Red.gb&quot;</span>
+    print <span class="fu">$</span> BS.length <span class="fu">.</span> fst 
+    <span class="fu">$</span> BS.breakSubstring (BS.pack <span class="fu">$</span> oneString <span class="st">&quot;BULBASAUR&quot;</span> (<span class="dv">128</span><span class="fu">-</span><span class="dv">65</span>)) game</code></pre>
 <p>Which returns <code>116750</code>, or in hex, <code>0x1C80E</code>.</p>
-<p>However, this results in some new mysteries. Where is Ivysaur, and why is it not between Bulbasaur and Venusaur? Why does Goldeen come after Tentacruel? And what exactly is that mysterious MissingNo? Stay tuned for Part II of Finding Bulbasaur.</p>
+<p>However, this results in some new mysteries. Where is Ivysaur, and why is it not between Bulbasaur and Venusaur? Why does Goldeen come after Tentacruel? We’ll answer those questions and more next month.</p>
 <p>Find the code here at this gist: https://gist.github.com/arknave/8294686</p>
 </article>
 
